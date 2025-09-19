@@ -9,6 +9,9 @@ import java.util.HashSet;
 import java.util.Locale;
 import java.util.Set;
 
+import org.eclipse.jgit.lib.Repository;
+import org.eclipse.jgit.lib.StoredConfig;
+import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
 
@@ -80,12 +83,12 @@ public class InstallHookCommand implements CommandLineRunner {
 
     private Path resolveHooksDir(File repoRoot, File gitDir) {
         try {
-            org.eclipse.jgit.storage.file.FileRepositoryBuilder b = new org.eclipse.jgit.storage.file.FileRepositoryBuilder()
+            FileRepositoryBuilder b = new FileRepositoryBuilder()
                     .setGitDir(gitDir)
                     .readEnvironment()
                     .findGitDir();
-            try (org.eclipse.jgit.lib.Repository repo = b.build()) {
-                org.eclipse.jgit.lib.StoredConfig cfg = repo.getConfig();
+            try (Repository repo = b.build()) {
+                StoredConfig cfg = repo.getConfig();
                 String hooksPath = cfg.getString("core", null, "hooksPath");
                 if (hooksPath != null && !hooksPath.isBlank()) {
                     Path p = repoRoot.toPath().resolve(hooksPath).normalize();

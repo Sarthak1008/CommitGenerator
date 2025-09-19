@@ -27,7 +27,42 @@ mvn -q -DskipTests package
 
 ### Option 3: Add as Maven Dependency
 
-Add to your project's `pom.xml` as a dependency plugin execution via the Spring Boot repackage JAR, or run directly with Maven.
+To use CommitGenerator as a dependency in your Maven project, add the following to your `pom.xml`:
+
+```xml
+<dependency>
+    <groupId>com.AutoCommitter</groupId>
+    <artifactId>CommitGenerator</artifactId>
+    <version>0.0.1-SNAPSHOT</version>
+</dependency>
+```
+
+### Option 4: Use as Maven Plugin
+
+You can also configure CommitGenerator as a Maven plugin in your project:
+
+```xml
+<build>
+    <plugins>
+        <plugin>
+            <groupId>com.AutoCommitter</groupId>
+            <artifactId>CommitGenerator</artifactId>
+            <version>0.0.1-SNAPSHOT</version>
+            <executions>
+                <execution>
+                    <id>install-git-hook</id>
+                    <phase>initialize</phase>
+                    <goals>
+                        <goal>install-hook</goal>
+                    </goals>
+                </execution>
+            </executions>
+        </plugin>
+    </plugins>
+</build>
+```
+
+This will automatically install the git hook during the initialize phase of your Maven build.
 
 Build
 
