@@ -1,8 +1,31 @@
-CommitGenerator
+# CommitGenerator
 
 An opinionated Maven/Spring Boot CLI to generate Git commit messages from staged changes. Uses JGit to read `git diff --staged` and a simple heuristic generator to produce Conventional Commit style messages. Optionally performs the commit.
 
-Install as Maven plugin execution (project-local)
+## Features
+
+- Automatically generates commit messages in Conventional Commit format
+- Analyzes staged changes to determine the type of commit
+- Installs as a Git hook to automatically generate messages
+- Works on both Windows and Unix systems
+
+## Installation
+
+### Option 1: Download and Use JAR Directly
+
+1. Download the latest JAR from the [Releases](https://github.com/Sarthak1008/CommitGenerator/releases) page
+2. Place the JAR in your project directory
+3. Install the Git hook (see below)
+
+### Option 2: Build from Source
+
+```bash
+git clone https://github.com/Sarthak1008/CommitGenerator.git
+cd CommitGenerator
+mvn -q -DskipTests package
+```
+
+### Option 3: Add as Maven Dependency
 
 Add to your project's `pom.xml` as a dependency plugin execution via the Spring Boot repackage JAR, or run directly with Maven.
 
@@ -12,21 +35,35 @@ Build
 mvn -q -DskipTests package
 ```
 
-Run (print message only)
+## Usage
+
+### Generate Commit Message Only
 
 ```bash
-java -jar target/CommitGenerator-0.0.1-SNAPSHOT.jar generate-commit
+java -jar CommitGenerator-0.0.1-SNAPSHOT.jar generate-commit
 ```
 
-Run and commit
+### Generate and Commit in One Step
 
 ```bash
-java -jar target/CommitGenerator-0.0.1-SNAPSHOT.jar generate-commit --commit
+java -jar CommitGenerator-0.0.1-SNAPSHOT.jar generate-commit --commit
 ```
 
-Git hook (auto after `git add .`)
+### Install Git Hook (Recommended)
 
-Create `.git/hooks/prepare-commit-msg` (make it executable on Unix) to prefill message:
+The easiest way to install the Git hook is to use the built-in command:
+
+```bash
+java -jar CommitGenerator-0.0.1-SNAPSHOT.jar install-hook
+```
+
+This will automatically create the appropriate hook file for your platform.
+
+### Manual Hook Installation
+
+#### Unix/Linux/Mac
+
+Create `.git/hooks/prepare-commit-msg` (make it executable with `chmod +x`):
 
 ```bash
 #!/bin/sh
@@ -34,22 +71,40 @@ Create `.git/hooks/prepare-commit-msg` (make it executable on Unix) to prefill m
 if [ -s "$1" ]; then
   exit 0
 fi
-MSG=$(java -jar target/CommitGenerator-0.0.1-SNAPSHOT.jar generate-commit)
+JAR=CommitGenerator-0.0.1-SNAPSHOT.jar
+# Run quietly (no banner/logs) so only the message is written
+MSG=$(java -jar "$JAR" --spring.main.web-application-type=none --spring.main.banner-mode=off --logging.level.root=OFF generate-commit)
 echo "$MSG" > "$1"
 ```
 
-On Windows (PowerShell) for local repo hook `.git/hooks/prepare-commit-msg`:
+#### Windows (PowerShell)
+
+Create `.git/hooks/prepare-commit-msg.ps1`:
 
 ```powershell
-Param(
-  [string]$CommitMsgFile
-)
-if ((Get-Item $CommitMsgFile).Length -gt 0) { exit 0 }
-$jar = "target/CommitGenerator-0.0.1-SNAPSHOT.jar"
-$cmd = "java -jar `"$jar`" generate-commit"
-$MSG = & powershell -NoProfile -Command $cmd
+Param([string]$CommitMsgFile)
+$jar = 'CommitGenerator-0.0.1-SNAPSHOT.jar'
+# Skip if there is any non-comment content
+$raw = Get-Content -Path $CommitMsgFile -Raw -ErrorAction SilentlyContinue
+$lines = @()
+if ($null -ne $raw) { $lines = $raw -split "`n" }
+$hasText = $lines | Where-Object { $_ -notmatch '^[	 ]*#' } | Where-Object { $_.Trim() -ne '' } | Measure-Object | Select-Object -ExpandProperty Count
+if ($hasText -gt 0) { exit 0 }
+$MSG = & powershell -NoProfile -Command "java -jar `"$jar`" --spring.main.web-application-type=none --spring.main.banner-mode=off --logging.level.root=OFF generate-commit"
 Set-Content -Path $CommitMsgFile -Value $MSG -NoNewline
 ```
+
+## Example Output
+
+The tool generates commit messages in the Conventional Commit format:
+
+```
+feat(auth): 2 added, 1 modified - implement user authentication
+```
+
+## License
+
+MIT
 
 Programmatic use
 

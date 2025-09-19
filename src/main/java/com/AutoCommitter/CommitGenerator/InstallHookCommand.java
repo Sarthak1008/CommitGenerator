@@ -116,7 +116,8 @@ public class InstallHookCommand implements CommandLineRunner {
                 "  exit 0\n" +
                 "fi\n" +
                 "JAR=target/CommitGenerator-0.0.1-SNAPSHOT.jar\n" +
-                "MSG=$(java -jar \"$JAR\" generate-commit)\n" +
+                "# Run quietly (no banner/logs) so only the message is written\n" +
+                "MSG=$(java -jar \"$JAR\" --spring.main.web-application-type=none --spring.main.banner-mode=off --logging.level.root=OFF generate-commit)\n" +
                 "echo \"$MSG\" > \"$1\"\n";
     }
 
@@ -129,7 +130,7 @@ public class InstallHookCommand implements CommandLineRunner {
                 "if ($null -ne $raw) { $lines = $raw -split \"`n\" }\n" +
                 "$hasText = $lines | Where-Object { $_ -notmatch '^[\t ]*#' } | Where-Object { $_.Trim() -ne '' } | Measure-Object | Select-Object -ExpandProperty Count\n" +
                 "if ($hasText -gt 0) { exit 0 }\n" +
-                "$MSG = & powershell -NoProfile -Command \"java -jar `\"$jar`\" generate-commit\"\n" +
+                "$MSG = & powershell -NoProfile -Command \"java -jar `\"$jar`\" --spring.main.web-application-type=none --spring.main.banner-mode=off --logging.level.root=OFF generate-commit\"\n" +
                 "Set-Content -Path $CommitMsgFile -Value $MSG -NoNewline\n";
     }
 }
